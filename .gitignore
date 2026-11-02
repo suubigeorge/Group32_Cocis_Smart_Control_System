@@ -1,0 +1,74 @@
+
+# ==========================================
+# ESP-IDF BUILD FILES
+# ==========================================
+
+build/
+sdkconfig
+sdkconfig.old
+sdkconfig.backup
+dependencies.lock
+
+# Compiled binaries and object files
+*.o
+*.a
+*.elf
+*.bin
+*.map
+*.hex
+*.uf2
+*.pyc
+
+# ==========================================
+# ESP-IDF GENERATED FILES
+# ==========================================
+
+managed_components/
+*.d
+*.su
+*.gcda
+*.gcno
+
+# ==========================================
+# VS CODE
+# ==========================================
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# ==========================================
+# PYTHON
+# ==========================================
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# ==========================================
+# OPERATING SYSTEM
+# ==========================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# LOGS AND TEMPORARY FILES
+# ==========================================
+
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# ==========================================
+# ESP-IDF EDITOR / IDE TEMPORARY FILES
+# ==========================================
+
+*.code-workspace
