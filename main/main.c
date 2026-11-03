@@ -1,7 +1,5 @@
 /*
- * main.c - CoCIS Smart Control and Monitoring System
- * Makerere University, College of Computing and Information Sciences
- * BSE III & CS II coursework 2026/2027 - ESP32 + ESP-IDF + Wokwi
+ * main.c - Group32_CoCIS_Smart_Control
  *
  * Start-up order and the task map (one ESP32, three logical terminals):
  *
