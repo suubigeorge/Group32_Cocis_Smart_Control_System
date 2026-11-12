@@ -4,7 +4,8 @@
  * Start-up order and the task map (one ESP32, three logical terminals):
  *
  *   Task        Prio  Role
- *   access      6     Terminal A - main entrance: RFID, doors, occupancy
+ *   access      6     Terminal A - main entrance: decisions, doors, occupancy
+ *   rfid        5     Terminal A - polls the ENTRY and EXIT MFRC522 readers
  *   room1/room2 5     Terminals B, C - PIR occupancy + automatic lights
  *   supervisor  4     schedule enforcement, closing warnings, LCD clock
  *   logger      3     single writer of the SD card (queue consumer)
@@ -45,6 +46,7 @@ void app_main(void)
     /* Logger first so no start-up events are lost */
     xTaskCreate(logger_task,     "logger",     4096, NULL,            3, NULL);
     xTaskCreate(access_task,     "access",     4096, NULL,            6, NULL);
+    xTaskCreate(rfid_task,       "rfid",       4096, NULL,            5, NULL);
     xTaskCreate(room_task,       "room1",      3072, (void *)0,       5, NULL);
     xTaskCreate(room_task,       "room2",      3072, (void *)1,       5, NULL);
     xTaskCreate(supervisor_task, "supervisor", 3072, NULL,            4, NULL);
