@@ -72,13 +72,23 @@ void hw_init(void)
     };
     ESP_ERROR_CHECK(ledc_channel_config(&cb));
 
-    /* Buttons: active low with internal pull-ups */
+    /* Emergency button: active low with internal pull-up */
     gpio_config_t in = {
-        .pin_bit_mask = (1ULL << PIN_BTN_ENTRY_TAP) | (1ULL << PIN_BTN_EXIT_TAP) |
-                        (1ULL << PIN_BTN_CARD_SELECT) | (1ULL << PIN_BTN_EMERGENCY),
+        .pin_bit_mask = (1ULL << PIN_BTN_EMERGENCY),
         .mode = GPIO_MODE_INPUT, .pull_up_en = GPIO_PULLUP_ENABLE,
     };
     ESP_ERROR_CHECK(gpio_config(&in));
+
+    /* RFID readers: keep chip-selects HIGH (not selected) and reset LOW
+     * (reader off) until the rfid task sets them up. */
+    gpio_config_t rfid = {
+        .pin_bit_mask = (1ULL << PIN_RFID_ENTRY_CS) | (1ULL << PIN_RFID_EXIT_CS) | (1ULL << PIN_RFID_RST),
+        .mode = GPIO_MODE_OUTPUT,
+    };
+    ESP_ERROR_CHECK(gpio_config(&rfid));
+    gpio_set_level(PIN_RFID_ENTRY_CS, 1);
+    gpio_set_level(PIN_RFID_EXIT_CS, 1);
+    gpio_set_level(PIN_RFID_RST, 0);
 
     /* PIR sensors */
     gpio_config_t pir = {

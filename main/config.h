@@ -15,20 +15,27 @@
 #define LCD_I2C_ADDR         0x27
 #define RTC_I2C_ADDR         0x68
 
+/* ---------- SD card SPI bus (SPI2) ---------- */
+#define PIN_SPI_SCK          18
+#define PIN_SPI_MOSI         23
+#define PIN_SPI_MISO         19
+
 /* ---------- SD card (SPI) ---------- */
 #define PIN_SD_CS            5
-#define PIN_SD_SCK           18
-#define PIN_SD_MOSI          23
-#define PIN_SD_MISO          19
 #define SD_MOUNT_POINT       "/sdcard"
 
 /* ---------- Terminal A: main entrance ---------- */
 #define PIN_SERVO_ENTRY      13   /* entry door lock/turnstile */
 #define PIN_SERVO_EXIT       14   /* exit door lock/turnstile  */
-#define PIN_BTN_ENTRY_TAP    32   /* "tap card on ENTRY reader" */
-#define PIN_BTN_EXIT_TAP     33   /* "tap card on EXIT reader"  */
-#define PIN_BTN_CARD_SELECT  25   /* pick which demo card is in hand */
-#define PIN_BTN_EMERGENCY    26   /* fire / emergency release (toggle) */
+/* RFID readers have their OWN SPI bus (SPI3), separate from the SD card,
+ * so the two kinds of device can never fight over the MISO line. */
+#define PIN_RFID_SCK         2
+#define PIN_RFID_MOSI        12
+#define PIN_RFID_MISO        26
+#define PIN_RFID_ENTRY_CS    32   /* MFRC522 on the ENTRY side (SDA pin = chip select) */
+#define PIN_RFID_EXIT_CS     33   /* MFRC522 on the EXIT side */
+#define PIN_RFID_RST         25   /* shared reset line of both readers */
+#define PIN_BTN_EMERGENCY    0    /* fire / emergency release (toggle); GPIO0 = BOOT button on DevKits */
 #define PIN_BUZZER           15
 
 /* ---------- Terminals B & C: lecture rooms ---------- */
@@ -53,7 +60,7 @@
 #define SERVO_OPEN_DEG           90
 
 #define MAX_USERS                32
-#define UID_LEN                  12   /* 8 hex chars + NUL, with headroom */
+#define UID_LEN                  16   /* up to 7-byte UID = 14 hex chars + NUL */
 #define NAME_LEN                 24
 #define ROOM_COUNT               2
 
@@ -66,3 +73,6 @@
 #define SESSION_TIMEOUT_S        300
 #define UNKNOWN_CARD_ALARM_COUNT 3    /* this many unknown cards ... */
 #define UNKNOWN_CARD_WINDOW_S    60   /* ... within this window raises an alarm */
+#define RFID_POLL_MS             10   /* pause between reader polls (short: Wokwi's Tap lasts only 500 ms) */
+#define RFID_REPEAT_IGNORE_MS    1500 /* card must be away this long before it counts as a new tap */
+#define RFID_HEALTH_CHECK_S      5    /* reader offline / tamper check period */

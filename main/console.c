@@ -90,6 +90,15 @@ static bool parse_hhmm(const char *s, uint16_t *out)
     return true;
 }
 
+/* "01:02:03:04" or "01 02 03 04" or "01020304" -> "01020304" */
+static void norm_uid(char *u)
+{
+    char *w = u;
+    for (char *r = u; *r; r++)
+        if (isxdigit((unsigned char)*r)) *w++ = toupper((unsigned char)*r);
+    *w = 0;
+}
+
 static bool require_admin(void)
 {
     if (s_admin) return true;
@@ -114,7 +123,8 @@ static void cmd_help(void)
         "  sdlog access|events [n]  last n lines from SD card files\n"
         "  schedule               show access hours\n"
         "  time                   show date/time\n"
-        "  tap in|out <uid>       simulate an RFID tap at entry/exit reader\n"
+        "  tap in|out <uid>       present a card UID without a reader (test)\n"
+        "  readers                RFID reader status\n"
         "  login | logout | whoami\n"
         " ADMIN (login required)\n"
         "  setsched HH:MM HH:MM   set access hours (open close)\n"
@@ -180,6 +190,11 @@ static void cmd_status(void)
         printf(" Lecture Room %d  : %-8s lights %-3s mode %s\n", r + 1, rooms[r].occupied ? "OCCUPIED" : "empty",
                rooms[r].light_on ? "ON" : "OFF",
                rooms[r].mode == LIGHT_AUTO ? "AUTO" : rooms[r].mode == LIGHT_FORCE_ON ? "FORCED ON" : "FORCED OFF");
+    for (int d = 0; d < 2; d++) {
+        uint8_t ver = 0;
+        bool ok = access_reader_status(d, &ver);
+        printf(" %s reader    : %s (chip 0x%02X)\n", d ? "Exit " : "Entry", ok ? "OK" : "NOT RESPONDING", ver);
+    }
     printf(" SD card         : %s  (%lu records written, %lu errors, %lu dropped)\n",
            (b & EVT_SD_OK) ? "OK" : "NOT AVAILABLE", (unsigned long)w, (unsigned long)e,
            (unsigned long)log_dropped_count());
@@ -202,7 +217,7 @@ static void cmd_inside(void)
     char ts[24];
     for (int i = 0; i < n; i++) {
         fmt_time(since[i], ts, sizeof(ts));
-        printf("  %-9s %-16s %-8s since %s\n", u[i].uid, u[i].name, role_name(u[i].role), ts + 11);
+        printf("  %-14s %-16s %-8s since %s\n", u[i].uid, u[i].name, role_name(u[i].role), ts + 11);
     }
 }
 
@@ -257,11 +272,11 @@ static void cmd_users(void)
     memcpy(u, g_users, sizeof(u));
     memcpy(in, g_inside, sizeof(in));
     state_unlock();
-    printf("UID       Name             Role      Card     Location\n");
+    printf("UID            Name             Role      Card     Location\n");
     for (int i = 0; i < n; i++)
-        printf("%-9s %-16s %-9s %-8s %s\n", u[i].uid, u[i].name, role_name(u[i].role),
+        printf("%-14s %-16s %-9s %-8s %s\n", u[i].uid, u[i].name, role_name(u[i].role),
                u[i].active ? "active" : "BLOCKED", in[i] ? "INSIDE" : "outside");
-    printf("%d of %d slots used. Unregistered demo card: 0BADCAFE\n", n, MAX_USERS);
+    printf("%d of %d slots used. Wokwi Red card AA:BB:CC:DD is unregistered (for the denied demo).\n", n, MAX_USERS);
 }
 
 static void cmd_log(int n)
@@ -272,7 +287,7 @@ static void cmd_log(int n)
     char ts[24];
     for (int i = 0; i < got; i++) {
         fmt_time(ev[i].ts, ts, sizeof(ts));
-        printf("%s %-7s %c %-9s %-15s %s\n", ts, event_type_name(ev[i].type), ev[i].dir,
+        printf("%s %-7s %c %-14s %-15s %s\n", ts, event_type_name(ev[i].type), ev[i].dir,
                ev[i].uid, ev[i].name, ev[i].msg);
     }
     if (!got) printf("(no events yet)\n");
@@ -366,8 +381,17 @@ static void handle(int argc, char **argv)
     }
     else if (!strcmp(cmd, "tap")) {
         if (argc < 3 || (strcmp(argv[1], "in") && strcmp(argv[1], "out"))) { printf("usage: tap in|out <uid>\n"); return; }
-        for (char *p = argv[2]; *p; p++) *p = toupper((unsigned char)*p);
+        norm_uid(argv[2]);
         if (!access_queue_tap(argv[2], argv[1][0] == 'i' ? 'I' : 'O')) printf("Entrance busy, try again.\n");
+    }
+    else if (!strcmp(cmd, "readers")) {
+        for (int d = 0; d < 2; d++) {
+            uint8_t ver = 0;
+            bool ok = access_reader_status(d, &ver);
+            printf("%s reader (CS GPIO%d): %s, MFRC522 version 0x%02X%s\n", d ? "EXIT " : "ENTRY",
+                   d ? PIN_RFID_EXIT_CS : PIN_RFID_ENTRY_CS, ok ? "OK" : "NOT RESPONDING", ver,
+                   ver == 0x91 ? " (v1.0)" : ver == 0x92 ? " (v2.0)" : "");
+        }
     }
     else if (!strcmp(cmd, "login"))  cmd_login();
     else if (!strcmp(cmd, "logout")) {
@@ -423,7 +447,7 @@ static void handle(int argc, char **argv)
             if (i > 3) strlcat(name, " ", sizeof(name));
             strlcat(name, argv[i], sizeof(name));
         }
-        for (char *p = argv[1]; *p; p++) *p = toupper((unsigned char)*p);
+        norm_uid(argv[1]);
         if (strlen(argv[1]) >= UID_LEN) { printf("UID too long.\n"); return; }
         if (users_add(argv[1], name, role)) {
             printf("Card %s registered to %s (%s)\n", argv[1], name, role_name(role));
@@ -433,7 +457,7 @@ static void handle(int argc, char **argv)
     else if (!strcmp(cmd, "deluser") || !strcmp(cmd, "block") || !strcmp(cmd, "unblock")) {
         if (!require_admin()) return;
         if (argc < 2) { printf("usage: %s <uid>\n", cmd); return; }
-        for (char *p = argv[1]; *p; p++) *p = toupper((unsigned char)*p);
+        norm_uid(argv[1]);
         bool ok = !strcmp(cmd, "deluser") ? users_remove(argv[1]) : users_set_active(argv[1], !strcmp(cmd, "unblock"));
         printf(ok ? "Done.\n" : "Card not found.\n");
         if (ok) log_event(EV_CONFIG, '-', argv[1], NULL, "Card %s", !strcmp(cmd, "deluser") ? "deleted" :
@@ -442,7 +466,7 @@ static void handle(int argc, char **argv)
     else if (!strcmp(cmd, "checkout")) {
         if (!require_admin()) return;
         if (argc < 2) { printf("usage: checkout <uid>\n"); return; }
-        for (char *p = argv[1]; *p; p++) *p = toupper((unsigned char)*p);
+        norm_uid(argv[1]);
         bool ok = false;
         if (state_lock()) {
             int i = users_find(argv[1]);
