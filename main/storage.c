@@ -27,7 +27,7 @@ static uint32_t s_written, s_errors;
 
 #define NVS_NS        "cocis"
 #define NVS_KEY_CFG   "cfg"
-#define NVS_KEY_USERS "users"
+#define NVS_KEY_USERS "users2"   /* v2: 16-byte UIDs for 7-byte RFID cards */
 
 /* ---------------- NVS ---------------- */
 esp_err_t storage_nvs_init(void)
@@ -108,14 +108,15 @@ esp_err_t storage_sd_init(void)
 {
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
     spi_bus_config_t bus = {
-        .mosi_io_num = PIN_SD_MOSI,
-        .miso_io_num = PIN_SD_MISO,
-        .sclk_io_num = PIN_SD_SCK,
+        .mosi_io_num = PIN_SPI_MOSI,
+        .miso_io_num = PIN_SPI_MISO,
+        .sclk_io_num = PIN_SPI_SCK,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
         .max_transfer_sz = 4000,
     };
     esp_err_t err = spi_bus_initialize(host.slot, &bus, SDSPI_DEFAULT_DMA);
+    if (err == ESP_ERR_INVALID_STATE) err = ESP_OK;
     if (err != ESP_OK) { ESP_LOGE(TAG, "SPI bus init failed: %s", esp_err_to_name(err)); return err; }
 
     sdspi_device_config_t slot = SDSPI_DEVICE_CONFIG_DEFAULT();
@@ -170,7 +171,7 @@ void logger_task(void *arg)
         recent_push(&ev);
         fmt_time(ev.ts, ts, sizeof(ts));
         /* Live feed on the serial monitor */
-        printf("\n[%s] %-7s %c %-9s %-15s %s\n", ts + 11, event_type_name(ev.type),
+        printf("\n[%s] %-7s %c %-14s %-15s %s\n", ts + 11, event_type_name(ev.type),
                ev.dir, ev.uid, ev.name, ev.msg);
         if (xEventGroupGetBits(g_sys_events) & EVT_SD_OK) write_event_to_sd(&ev);
     }
