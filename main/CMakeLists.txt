@@ -1,18 +1,9 @@
 # No REQUIRES: the main component automatically depends on every IDF
 # component, which keeps this file working on ESP-IDF 5.2 through 6.x.
 idf_component_register(
-    SRCS 
-          "main.c" 
-          "app_state.c" 
-          "access.c" 
-          "rooms.c" 
-          "schedule.c"
-          "storage.c" 
-          "rtc_ds1307.c" 
-          "lcd_i2c.c" 
-          "hw.c" 
-          "console.c"
-    INCLUDE_DIRS "." 
+    SRCS "main.c" "app_state.c" "access.c" "rc522.c" "rooms.c" "schedule.c"
+         "storage.c" "rtc_ds1307.c" "lcd_i2c.c" "hw.c" "console.c"
+    INCLUDE_DIRS "."
     REQUIRES 
           mbedtls  
           driver 
@@ -26,5 +17,8 @@ idf_component_register(
           esp_driver_ledc
           esp_adc
           esp_driver_uart
-
-)
+          esp_driver_gpio
+          esp_driver_spi
+          freertos
+          log
+          )
