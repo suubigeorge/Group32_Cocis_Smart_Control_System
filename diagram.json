@@ -1,471 +1,509 @@
 {
-    "version": 1,
-    "author": "Group 32",
-    "editor": "wokwi",
-    "parts": [
-      {
-        "type": "board-esp32-devkit-c-v4",
-        "id": "esp",
-        "top": 0,
-        "left": 0,
-        "attrs": {}
-      },
-      {
-        "type": "wokwi-lcd1602",
-        "id": "lcd",
-        "top": -260,
-        "left": 230,
-        "attrs": {
-          "pins": "i2c"
-        }
-      },
-      {
-        "type": "wokwi-ds1307",
-        "id": "rtc",
-        "top": -90,
-        "left": 230,
-        "attrs": {}
-      },
-      {
-        "type": "wokwi-microsd-card",
-        "id": "sd",
-        "top": -60,
-        "left": -260,
-        "attrs": {}
-      },
-      {
-        "type": "wokwi-servo",
-        "id": "servoEntry",
-        "top": 120,
-        "left": -330,
-        "attrs": {
-          "horn": "single"
-        }
-      },
-      {
-        "type": "wokwi-servo",
-        "id": "servoExit",
-        "top": 240,
-        "left": -330,
-        "attrs": {
-          "horn": "single"
-        }
-      },
-      {
-        "type": "wokwi-pushbutton",
-        "id": "btnEntry",
-        "top": 360,
-        "left": -200,
-        "attrs": {
-          "color": "green",
-          "label": "ENTRY tap"
-        }
-      },
-      {
-        "type": "wokwi-pushbutton",
-        "id": "btnExit",
-        "top": 420,
-        "left": -200,
-        "attrs": {
-          "color": "blue",
-          "label": "EXIT tap"
-        }
-      },
-      {
-        "type": "wokwi-pushbutton",
-        "id": "btnCard",
-        "top": 480,
-        "left": -200,
-        "attrs": {
-          "color": "yellow",
-          "label": "CARD select"
-        }
-      },
-      {
-        "type": "wokwi-pushbutton",
-        "id": "btnEmergency",
-        "top": 540,
-        "left": -200,
-        "attrs": {
-          "color": "red",
-          "label": "EMERGENCY"
-        }
-      },
-      {
-        "type": "wokwi-buzzer",
-        "id": "buzzer",
-        "top": -150,
-        "left": -60,
-        "attrs": {
-          "volume": "0.2"
-        }
-      },
-      {
-        "type": "wokwi-pir-motion-sensor",
-        "id": "pir1",
-        "top": 60,
-        "left": 260,
-        "attrs": {
-          "delayTime": "5"
-        }
-      },
-      {
-        "type": "wokwi-photoresistor-sensor",
-        "id": "ldr1",
-        "top": 70,
-        "left": 380,
-        "attrs": {
-          "lux": "50"
-        }
-      },
-      {
-        "type": "wokwi-led",
-        "id": "light1",
-        "top": 70,
-        "left": 560,
-        "attrs": {
-          "color": "yellow",
-          "label": "Room 1 lights"
-        }
-      },
-      {
-        "type": "wokwi-resistor",
-        "id": "r1",
-        "top": 150,
-        "left": 520,
-        "attrs": {
-          "value": "220"
-        },
-        "rotate": 90
-      },
-      {
-        "type": "wokwi-pir-motion-sensor",
-        "id": "pir2",
-        "top": 290,
-        "left": 260,
-        "attrs": {
-          "delayTime": "5"
-        }
-      },
-      {
-        "type": "wokwi-photoresistor-sensor",
-        "id": "ldr2",
-        "top": 300,
-        "left": 380,
-        "attrs": {
-          "lux": "50"
-        }
-      },
-      {
-        "type": "wokwi-led",
-        "id": "light2",
-        "top": 300,
-        "left": 560,
-        "attrs": {
-          "color": "yellow",
-          "label": "Room 2 lights"
-        }
-      },
-      {
-        "type": "wokwi-resistor",
-        "id": "r2",
-        "top": 380,
-        "left": 520,
-        "attrs": {
-          "value": "220"
-        },
-        "rotate": 90
+  "version": 1,
+  "author": "CoCIS_Group32",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd",
+      "top": -260,
+      "left": 230,
+      "attrs": {
+        "pins": "i2c"
       }
+    },
+    {
+      "type": "wokwi-ds1307",
+      "id": "rtc",
+      "top": -90,
+      "left": 230,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-microsd-card",
+      "id": "sd",
+      "top": -60,
+      "left": -260,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servoEntry",
+      "top": 120,
+      "left": -330,
+      "attrs": {
+        "horn": "single"
+      }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servoExit",
+      "top": 240,
+      "left": -330,
+      "attrs": {
+        "horn": "single"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnEmergency",
+      "top": 330,
+      "left": 40,
+      "attrs": {
+        "color": "red",
+        "label": "EMERGENCY"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer",
+      "top": -150,
+      "left": -60,
+      "attrs": {
+        "volume": "0.2"
+      }
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir1",
+      "top": 60,
+      "left": 260,
+      "attrs": {
+        "delayTime": "5"
+      }
+    },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr1",
+      "top": 70,
+      "left": 380,
+      "attrs": {
+        "lux": "50"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "light1",
+      "top": 70,
+      "left": 560,
+      "attrs": {
+        "color": "yellow",
+        "label": "Room 1 lights"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 150,
+      "left": 520,
+      "attrs": {
+        "value": "220"
+      },
+      "rotate": 90
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir2",
+      "top": 290,
+      "left": 260,
+      "attrs": {
+        "delayTime": "5"
+      }
+    },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr2",
+      "top": 300,
+      "left": 380,
+      "attrs": {
+        "lux": "50"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "light2",
+      "top": 300,
+      "left": 560,
+      "attrs": {
+        "color": "yellow",
+        "label": "Room 2 lights"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 380,
+      "left": 520,
+      "attrs": {
+        "value": "220"
+      },
+      "rotate": 90
+    },
+    {
+      "type": "board-mfrc522",
+      "id": "rfidEntry",
+      "top": 360,
+      "left": -330,
+      "rotate": 0,
+      "attrs": {
+        "uid": "01:02:03:04"
+      }
+    },
+    {
+      "type": "board-mfrc522",
+      "id": "rfidExit",
+      "top": 560,
+      "left": -330,
+      "rotate": 0,
+      "attrs": {
+        "uid": "01:02:03:04"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:21",
+      "lcd:SDA",
+      "blue",
+      []
     ],
-    "connections": [
-      [
-        "esp:21",
-        "lcd:SDA",
-        "blue",
-        []
-      ],
-      [
-        "esp:22",
-        "lcd:SCL",
-        "purple",
-        []
-      ],
-      [
-        "lcd:GND",
-        "esp:GND.1",
-        "black",
-        []
-      ],
-      [
-        "esp:21",
-        "rtc:SDA",
-        "blue",
-        []
-      ],
-      [
-        "esp:22",
-        "rtc:SCL",
-        "purple",
-        []
-      ],
-      [
-        "rtc:GND",
-        "esp:GND.1",
-        "black",
-        []
-      ],
-      [
-        "lcd:VCC",
-        "esp:5V",
-        "red",
-        []
-      ],
-      [
-        "rtc:5V",
-        "esp:5V",
-        "red",
-        []
-      ],
-      [
-        "sd:CS",
-        "esp:5",
-        "orange",
-        []
-      ],
-      [
-        "sd:SCK",
-        "esp:18",
-        "orange",
-        []
-      ],
-      [
-        "sd:DI",
-        "esp:23",
-        "orange",
-        []
-      ],
-      [
-        "sd:DO",
-        "esp:19",
-        "orange",
-        []
-      ],
-      [
-        "sd:VCC",
-        "esp:3V3",
-        "red",
-        []
-      ],
-      [
-        "sd:GND",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "servoEntry:PWM",
-        "esp:13",
-        "orange",
-        []
-      ],
-      [
-        "servoEntry:V+",
-        "esp:5V",
-        "red",
-        []
-      ],
-      [
-        "servoEntry:GND",
-        "esp:GND.1",
-        "black",
-        []
-      ],
-      [
-        "servoExit:PWM",
-        "esp:14",
-        "orange",
-        []
-      ],
-      [
-        "servoExit:V+",
-        "esp:5V",
-        "red",
-        []
-      ],
-      [
-        "servoExit:GND",
-        "esp:GND.1",
-        "black",
-        []
-      ],
-      [
-        "btnEntry:1.r",
-        "esp:32",
-        "green",
-        []
-      ],
-      [
-        "btnEntry:2.r",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "btnExit:1.r",
-        "esp:33",
-        "green",
-        []
-      ],
-      [
-        "btnExit:2.r",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "btnCard:1.r",
-        "esp:25",
-        "green",
-        []
-      ],
-      [
-        "btnCard:2.r",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "btnEmergency:1.r",
-        "esp:26",
-        "green",
-        []
-      ],
-      [
-        "btnEmergency:2.r",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "buzzer:2",
-        "esp:15",
-        "orange",
-        []
-      ],
-      [
-        "buzzer:1",
-        "esp:GND.1",
-        "black",
-        []
-      ],
-      [
-        "pir1:OUT",
-        "esp:27",
-        "green",
-        []
-      ],
-      [
-        "pir1:VCC",
-        "esp:5V",
-        "red",
-        []
-      ],
-      [
-        "pir1:GND",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "ldr1:AO",
-        "esp:34",
-        "violet",
-        []
-      ],
-      [
-        "ldr1:VCC",
-        "esp:3V3",
-        "red",
-        []
-      ],
-      [
-        "ldr1:GND",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "esp:16",
-        "r1:1",
-        "orange",
-        []
-      ],
-      [
-        "r1:2",
-        "light1:A",
-        "orange",
-        []
-      ],
-      [
-        "light1:C",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "pir2:OUT",
-        "esp:4",
-        "green",
-        []
-      ],
-      [
-        "pir2:VCC",
-        "esp:5V",
-        "red",
-        []
-      ],
-      [
-        "pir2:GND",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "ldr2:AO",
-        "esp:35",
-        "violet",
-        []
-      ],
-      [
-        "ldr2:VCC",
-        "esp:3V3",
-        "red",
-        []
-      ],
-      [
-        "ldr2:GND",
-        "esp:GND.2",
-        "black",
-        []
-      ],
-      [
-        "esp:17",
-        "r2:1",
-        "orange",
-        []
-      ],
-      [
-        "r2:2",
-        "light2:A",
-        "orange",
-        []
-      ],
-      [
-        "light2:C",
-        "esp:GND.2",
-        "black",
-        []
-      ]
+    [
+      "esp:22",
+      "lcd:SCL",
+      "purple",
+      []
     ],
-    "dependencies": {}
-  }
+    [
+      "lcd:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "esp:21",
+      "rtc:SDA",
+      "blue",
+      []
+    ],
+    [
+      "esp:22",
+      "rtc:SCL",
+      "purple",
+      []
+    ],
+    [
+      "rtc:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd:VCC",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "rtc:5V",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "sd:CS",
+      "esp:5",
+      "orange",
+      []
+    ],
+    [
+      "sd:SCK",
+      "esp:18",
+      "orange",
+      []
+    ],
+    [
+      "sd:DI",
+      "esp:23",
+      "orange",
+      []
+    ],
+    [
+      "sd:DO",
+      "esp:19",
+      "orange",
+      []
+    ],
+    [
+      "sd:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "sd:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "servoEntry:PWM",
+      "esp:13",
+      "orange",
+      []
+    ],
+    [
+      "servoEntry:V+",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "servoEntry:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "servoExit:PWM",
+      "esp:14",
+      "orange",
+      []
+    ],
+    [
+      "servoExit:V+",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "servoExit:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "btnEmergency:1.r",
+      "esp:0",
+      "green",
+      []
+    ],
+    [
+      "btnEmergency:2.r",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "buzzer:2",
+      "esp:15",
+      "orange",
+      []
+    ],
+    [
+      "buzzer:1",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "pir1:OUT",
+      "esp:27",
+      "green",
+      []
+    ],
+    [
+      "pir1:VCC",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "pir1:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "ldr1:AO",
+      "esp:34",
+      "violet",
+      []
+    ],
+    [
+      "ldr1:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "ldr1:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "esp:16",
+      "r1:1",
+      "orange",
+      []
+    ],
+    [
+      "r1:2",
+      "light1:A",
+      "orange",
+      []
+    ],
+    [
+      "light1:C",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "pir2:OUT",
+      "esp:4",
+      "green",
+      []
+    ],
+    [
+      "pir2:VCC",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "pir2:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "ldr2:AO",
+      "esp:35",
+      "violet",
+      []
+    ],
+    [
+      "ldr2:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "ldr2:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "esp:17",
+      "r2:1",
+      "orange",
+      []
+    ],
+    [
+      "r2:2",
+      "light2:A",
+      "orange",
+      []
+    ],
+    [
+      "light2:C",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "rfidEntry:SDA",
+      "esp:32",
+      "yellow",
+      []
+    ],
+    [
+      "rfidEntry:SCK",
+      "esp:2",
+      "orange",
+      []
+    ],
+    [
+      "rfidEntry:MOSI",
+      "esp:12",
+      "orange",
+      []
+    ],
+    [
+      "rfidEntry:MISO",
+      "esp:26",
+      "orange",
+      []
+    ],
+    [
+      "rfidEntry:RST",
+      "esp:25",
+      "green",
+      []
+    ],
+    [
+      "rfidEntry:3.3V",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "rfidEntry:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "rfidExit:SDA",
+      "esp:33",
+      "yellow",
+      []
+    ],
+    [
+      "rfidExit:SCK",
+      "esp:2",
+      "orange",
+      []
+    ],
+    [
+      "rfidExit:MOSI",
+      "esp:12",
+      "orange",
+      []
+    ],
+    [
+      "rfidExit:MISO",
+      "esp:26",
+      "orange",
+      []
+    ],
+    [
+      "rfidExit:RST",
+      "esp:25",
+      "green",
+      []
+    ],
+    [
+      "rfidExit:3.3V",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "rfidExit:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ]
+  ],
+  "dependencies": {}
+}
