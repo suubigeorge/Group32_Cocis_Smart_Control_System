@@ -2,13 +2,16 @@
  * access.c - Terminal A: main entrance.
  * Owner: Access control.
  *
- * Wokwi has no RC522 RFID part, so the RFID readers are modelled as:
- *   CARD button  - choose which card is "in your hand" (shown on the LCD)
- *   ENTRY button - tap that card on the ENTRY reader
- *   EXIT button  - tap that card on the EXIT reader
- * Any UID can also be tapped from the serial console ("tap in <uid>").
- * Both sources feed g_tap_q, so ONE task makes every door decision:
- * no two taps can ever be processed at the same time.
+ * Two MFRC522 RFID readers: one on the ENTRY side, one on the EXIT side.
+ *
+ *   rfid task   (producer) - polls both readers over SPI, turns a card
+ *                            into a tap_req_t {uid, 'I'/'O'} -> g_tap_q
+ *   access task (consumer) - takes taps one at a time, decides, opens
+ *                            the door, updates who is inside, logs it
+ *
+ * The serial command "tap in|out <uid>" feeds the same queue (handy for
+ * testing cards you don't have). Because ONE task makes every door
+ * decision, two taps can never be processed at the same time.
  */
 #include <stdio.h>
 #include <string.h>
@@ -21,24 +24,26 @@
 #include "hw.h"
 #include "lcd_i2c.h"
 #include "access.h"
+#include "rc522.h"
 
 static const char *TAG = "access";
 
-#define UNKNOWN_DEMO_UID "0BADCAFE"   /* a card that is not registered */
+#define RFID_SPI_HOST SPI3_HOST       /* own bus, separate from the SD card (SPI2) */
 
-static int  s_card_sel;                    /* index into users, == count -> unknown card */
-static char s_card_label[17] = "Card: -";
-static portMUX_TYPE s_label_mux = portMUX_INITIALIZER_UNLOCKED;
+static rc522_t s_reader[2];                /* [DOOR_ENTRY], [DOOR_EXIT] */
+static volatile bool s_reader_ok[2];
 static int64_t s_door_close_at[2];         /* esp_timer us; 0 = closed */
 static bool s_door_is_open[2];
 static time_t s_unknown_ts[UNKNOWN_CARD_ALARM_COUNT];
 static int s_unknown_i;
 
+/* LCD line 2 on the idle screen: invite a tap, or show a reader fault */
 void access_get_card_label(char *buf, size_t len)
 {
-    taskENTER_CRITICAL(&s_label_mux);
-    strlcpy(buf, s_card_label, len);
-    taskEXIT_CRITICAL(&s_label_mux);
+    bool in = s_reader_ok[DOOR_ENTRY], out = s_reader_ok[DOOR_EXIT];
+    if (in && out)  strlcpy(buf, "Tap your card", len);
+    else if (!in && !out) strlcpy(buf, "RFID FAULT IN+OUT", len);
+    else strlcpy(buf, in ? "RFID FAULT: EXIT" : "RFID FAULT:ENTRY", len);
 }
 
 bool access_queue_tap(const char *uid, char dir)
@@ -48,23 +53,87 @@ bool access_queue_tap(const char *uid, char dir)
     return xQueueSend(g_tap_q, &r, pdMS_TO_TICKS(100)) == pdTRUE;
 }
 
-/* Returns the UID of the currently selected demo card */
-static void selected_uid(char *uid)
+bool access_reader_status(int door, uint8_t *version)
 {
-    strlcpy(uid, UNKNOWN_DEMO_UID, UID_LEN);
-    char label[17];
-    if (!state_lock()) return;
-    if (s_card_sel > g_user_count) s_card_sel = 0;
-    if (s_card_sel < g_user_count) {
-        strlcpy(uid, g_users[s_card_sel].uid, UID_LEN);
-        snprintf(label, sizeof(label), "Card:%.11s", g_users[s_card_sel].name);
-    } else {
-        snprintf(label, sizeof(label), "Card:UNKNOWN");
+    if (door < 0 || door > 1) return false;
+    if (version) *version = s_reader[door].version;
+    return s_reader_ok[door];
+}
+
+/* ------------------------------------------------------------------ */
+/* RFID task: the only code that talks to the two readers             */
+/* ------------------------------------------------------------------ */
+void rfid_task(void *arg)
+{
+    static const char *SIDE[2] = {"Entry", "Exit"};
+    static const int CS[2] = {PIN_RFID_ENTRY_CS, PIN_RFID_EXIT_CS};
+    char last_uid[2][UID_LEN] = {{0}};
+    int64_t last_time[2] = {0};
+    int64_t next_health = 0;
+
+    /* The readers' own SPI bus */
+    spi_bus_config_t bus = {
+        .mosi_io_num = PIN_RFID_MOSI, .miso_io_num = PIN_RFID_MISO, .sclk_io_num = PIN_RFID_SCK,
+        .quadwp_io_num = -1, .quadhd_io_num = -1, .max_transfer_sz = 64,
+    };
+    esp_err_t err = spi_bus_initialize(RFID_SPI_HOST, &bus, SPI_DMA_DISABLED);
+    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) ESP_LOGE(TAG, "RFID SPI bus: %s", esp_err_to_name(err));
+
+    rc522_hard_reset(PIN_RFID_RST);
+    for (int d = 0; d < 2; d++) {
+        rc522_init(&s_reader[d], RFID_SPI_HOST, CS[d]);
+        s_reader_ok[d] = s_reader[d].ok;
+        log_event(s_reader_ok[d] ? EV_SYSTEM : EV_ALERT, '-', NULL, NULL, "%s RFID reader %s (ver 0x%02X)",
+                  SIDE[d], s_reader_ok[d] ? "ready" : "NOT FOUND", s_reader[d].version);
     }
-    state_unlock();
-    taskENTER_CRITICAL(&s_label_mux);
-    strlcpy(s_card_label, label, sizeof(s_card_label));
-    taskEXIT_CRITICAL(&s_label_mux);
+    ESP_LOGI(TAG, "RFID readers polled every %d ms", RFID_POLL_MS);
+    /* Show the reader check on the LCD too, so a wiring fault is obvious */
+    char l2[32];
+    snprintf(l2, sizeof(l2), "IN:%s OUT:%s", s_reader_ok[0] ? "OK" : "FAIL", s_reader_ok[1] ? "OK" : "FAIL");
+    lcd_message("RFID readers", l2, 2500);
+
+    for (;;) {
+        int64_t now = esp_timer_get_time();
+
+        for (int d = 0; d < 2; d++) {
+            if (!s_reader_ok[d]) continue;
+            uint8_t uid[RC522_MAX_UID], len = 0;
+            if (!rc522_read_uid(&s_reader[d], uid, &len)) continue;
+
+            tap_req_t req = {.dir = d == DOOR_ENTRY ? 'I' : 'O', .source = TAP_SRC_READER};
+            rc522_uid_to_str(uid, len, req.uid, sizeof(req.uid));
+
+            /* A card held on the reader (Wokwi "Hold") is one tap, not many:
+             * it only counts again after it has been away for a while. */
+            bool same = strcmp(req.uid, last_uid[d]) == 0 && now - last_time[d] < RFID_REPEAT_IGNORE_MS * 1000LL;
+            strlcpy(last_uid[d], req.uid, UID_LEN);
+            last_time[d] = now;
+            if (same) continue;
+
+            printf("[rfid] %s reader read card %s\n", SIDE[d], req.uid);
+            if (xQueueSend(g_tap_q, &req, pdMS_TO_TICKS(200)) != pdTRUE)
+                log_event(EV_ALERT, req.dir, req.uid, NULL, "tap queue full - card ignored");
+        }
+
+        /* Health / tamper check: a reader that stops answering raises an alert */
+        if (now >= next_health) {
+            next_health = now + RFID_HEALTH_CHECK_S * 1000000LL;
+            for (int d = 0; d < 2; d++) {
+                bool ok = rc522_alive(&s_reader[d]);
+                if (ok != s_reader_ok[d]) {
+                    if (ok) {                       /* came back: set it up again */
+                        rc522_configure(&s_reader[d]);
+                        ok = s_reader[d].ok;
+                    }
+                    s_reader_ok[d] = ok;
+                    log_event(EV_ALERT, '-', NULL, NULL, "%s RFID reader %s", SIDE[d],
+                              ok ? "back ONLINE" : "OFFLINE - check wiring / tamper");
+                    if (!ok) hw_beep(150, 3);
+                }
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(RFID_POLL_MS));
+    }
 }
 
 static void open_door(door_t d)
@@ -197,34 +266,13 @@ static bool btn_pressed_edge(btn_t *b)
 
 void access_task(void *arg)
 {
-    btn_t b_in  = {.gpio = PIN_BTN_ENTRY_TAP},   b_out = {.gpio = PIN_BTN_EXIT_TAP},
-          b_sel = {.gpio = PIN_BTN_CARD_SELECT}, b_emg = {.gpio = PIN_BTN_EMERGENCY};
-    char uid[UID_LEN];
+    btn_t b_emg = {.gpio = PIN_BTN_EMERGENCY};
     bool emergency_was = false;
-    selected_uid(uid);
     ESP_LOGI(TAG, "Terminal A (main entrance) running");
 
     for (;;) {
         tap_req_t req;
         if (xQueueReceive(g_tap_q, &req, pdMS_TO_TICKS(20)) == pdTRUE) process_tap(&req);
-
-        if (btn_pressed_edge(&b_sel)) {
-            s_card_sel++;
-            selected_uid(uid);
-            char l[17];
-            access_get_card_label(l, sizeof(l));
-            lcd_message("Card in hand:", l + 5, 1200);
-        }
-        if (btn_pressed_edge(&b_in)) {
-            tap_req_t r = {.dir = 'I', .source = TAP_SRC_READER};
-            selected_uid(r.uid);
-            process_tap(&r);
-        }
-        if (btn_pressed_edge(&b_out)) {
-            tap_req_t r = {.dir = 'O', .source = TAP_SRC_READER};
-            selected_uid(r.uid);
-            process_tap(&r);
-        }
 
         if (btn_pressed_edge(&b_emg)) {
             if (xEventGroupGetBits(g_sys_events) & EVT_EMERGENCY) xEventGroupClearBits(g_sys_events, EVT_EMERGENCY);
