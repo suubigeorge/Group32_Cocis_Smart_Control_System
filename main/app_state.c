@@ -36,16 +36,23 @@ static portMUX_TYPE s_drop_mux = portMUX_INITIALIZER_UNLOCKED;
 #define LOCK_TIMEOUT pdMS_TO_TICKS(500)
 
 /* Demo cards loaded on first boot (later boots load from NVS). */
+/* The first six UIDs are the cards built into Wokwi's MFRC522 reader,
+ * so every one of them can be tapped in the simulation:
+ *   Blue 01:02:03:04  Green 11:22:33:44  Yellow 55:66:77:88
+ *   Red AA:BB:CC:DD (left UNREGISTERED on purpose)
+ *   NFC tag 04:11:22:33:44:55:66 (7-byte UID)  Key fob C0:FF:EE:99
+ * The Blue card's UID can be changed in diagram.json ("uid" attribute)
+ * to any of the other members' UIDs below. */
 static const user_rec_t DEFAULT_USERS[] = {
-    {"A1B2C3D4", "Kuoi David",     ROLE_STUDENT,  1},
-    {"B2C3D4E5", "Eria Paul",      ROLE_STUDENT,  1},
-    {"C3D4E5F6", "Suubi George",   ROLE_STUDENT,  1},
-    {"D4E5F6A7", "Mugalu Benjamin",ROLE_STUDENT,  1},
-    {"E5F6A7B8", "Ongol Matthew",  ROLE_STUDENT,  1},
-    {"11223344", "Dr. Lecturer",   ROLE_STAFF,    1},
-    {"55667788", "Security Guard", ROLE_SECURITY, 1},
-    {"99AABBCC", "Building Admin", ROLE_ADMIN,    1},
-    {"DEADBEEF", "Lost Card",      ROLE_STUDENT,  0},   /* blocked card demo */
+    {"01020304",       "Kuoi David",     ROLE_STUDENT,  1},   /* Wokwi Blue card   */
+    {"11223344",       "Dr. Lecturer",   ROLE_STAFF,    1},   /* Wokwi Green card  */
+    {"55667788",       "Security Guard", ROLE_SECURITY, 1},   /* Wokwi Yellow card */
+    {"04112233445566", "Building Admin", ROLE_ADMIN,    1},   /* Wokwi NFC tag     */
+    {"C0FFEE99",       "Lost Card",      ROLE_STUDENT,  0},   /* Wokwi Key fob: blocked */
+    {"B2C3D4E5",       "Eria Paul",      ROLE_STUDENT,  1},   /* set Blue uid B2:C3:D4:E5 */
+    {"C3D4E5F6",       "Suubi George",   ROLE_STUDENT,  1},   /* set Blue uid C3:D4:E5:F6 */
+    {"D4E5F6A7",       "Mugalu Benjamin",ROLE_STUDENT,  1},   /* set Blue uid D4:E5:F6:A7 */
+    {"E5F6A7B8",       "Ongol Matthew",  ROLE_STUDENT,  1},   /* set Blue uid E5:F6:A7:B8 */
 };
 
 static void hash_password(const uint8_t salt[8], const char *pw, uint8_t out[32])
